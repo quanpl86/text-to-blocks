@@ -132,7 +132,12 @@ export default function (window) {
     results.forEach(el => {
       const code = options.read(el, options)
 
-      const doc = options.parse(code, options)
+      // Tùy chỉnh để không thêm 'end' vào khối define
+      const parseOptions = {
+        ...options,
+        end: false, // Ngăn không cho parser tự động thêm 'end' vào khối define
+      };
+      const doc = options.parse(code, parseOptions);
 
       const svg = options.render(doc, options)
 

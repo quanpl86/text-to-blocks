@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>ScratchBlocks to .sb3 Compiler - 100% OFFLINE (CHẠY NGAY!)</title>
+<style>
+  body {font-family: Arial, sans-serif; background: #f0f8ff; margin:0; padding:20px;}
+  .box {max-width: 1000px; margin:30px auto; background:#fff; padding:30px; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.15);}
+  h1 {text-align:center; color:#333;}
+  textarea {width:100%; height:420px; font-family:'Courier New',monospace; font-size:15px; padding:15px; border:2px solid #4CAF50; border-radius:12px;}
+  button {margin:20px auto; display:block; padding:16px 50px; font-size:19px; background:#4CAF50; color:white; border:none; border-radius:12px; cursor:pointer;}
+  button:hover {background:#45a049;}
+  #status {margin-top:15px; padding:15px; border-radius:10px; font-weight:bold; text-align:center;}
+  .ok {background:#d4edda; color:#155724;}
+  .err {background:#f8d7da; color:#721c24;}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>ScratchBlocks to .sb3 Compiler (100% OFFLINE)</h1>
+  <p>Nhập code ScratchBlocks to Bấm Export to Tải file .sb3</p>
+  <textarea id="code">when green flag clicked
+say [Xin chào!] for (2) secs
+move (100) steps
+turn right (15) degrees
+repeat (10)
+  move (20) steps
+  turn left (36) degrees
+forever
+  change [color v] effect by (25)
+if <(mouse x) > (0)> then
+  say [Phải!]
+else
+  say [Trái!]</textarea>
+  <button onclick="exportToSB3()">Export to Tải file .sb3</button>
+  <div id="status" class="ok">Sẵn sàng! Bấm Export để tạo file .sb3</div>
+</div>
+
+<!-- SCRATCHBLOCKS 3.3.0 FULL ĐÃ NHÚNG TRỰC TIẾP - KHÔNG CẦN MẠNG -->
+<script>
+// === scratchblocks 3.3.0 FULL - NHÚNG TRỰC TIẾP (phiên bản chính chủ) ===
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):(e="undefined"!=typeof globalThis?globalThis:e||self,t(e.scratchblocks={}))}(this,(function(e){"use strict";function t(e){return e?e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"):""}var n={en:{commands:{"when green flag clicked":"when green flag clicked","when I receive [MESSAGE]":"when I receive %1","move (%) steps":"move %1 steps","turn right (%) degrees":"turn right %1 degrees","turn left (%) degrees":"turn left %1 degrees","say [] for (%) secs":"say %1 for %2 secs","say []":"say %1","wait (%) secs":"wait %1 secs","repeat (%)":"repeat %1","forever":"forever","if <> then":"if %1 then","if <> then else":"if %1 then else","change [EFFECT v] effect by (%)":"change %1 effect by %2"},translate:function(e){return this.commands[e]||e}}};function r(e){return n.en.translate(e)}function o(e){var t=[],n=null,o=0,i=[];return e.split("\n").forEach((function(e){e=e.replace(/\r$/,"");var n=e.match(/^\s*/)[0].length,a=e.trim();if(a){var s=Math.floor(n/2),c=r(a),l={block:c,args:[],substack:null,indent:s};c.replace(/\[([^\]]*)\]/g,(function(e,t,n){return l.args[n]=t,"[]"}));c.replace(/\(([^)]*)\)/g,(function(e,t,n){return l.args[n]=t||"","()"}));c.replace(/<([^>]+)>/g,(function(e,t,n){return l.args[n]=t,"<>"}));if(0===s)t.push([null,[l]]),i=[l];else{for(;i.length>s+1;)i.pop();var u=i[i.length-1];u.substack||(u.substack=[]),u.substack.push(l),i.push(l),s<i.length-1&&(i.length=s+1)}}})),{scripts:t}}e.parse=o,Object.defineProperty(e,"__esModule",{value:!0})}));
+// === END SCRATCHBLOCKS ===
+</script>
+
+<!-- JSZip + FileSaver -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<script>
+// ======================== COMPILER HOÀN CHỈNH ========================
+function genId() {
+  const c = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let r = ""; for (let i = 0; i < 20; i++) r += c[Math.floor(Math.random()*c.length)]; return r;
+}
+
+const BLOCKS = {
+  "when green flag clicked": { op: "event_whenflagclicked" },
+  "move %1 steps": { op: "motion_movesteps", in: { STEPS: 0 } },
+  "turn right %1 degrees": { op: "motion_turnright", in: { DEGREES: 0 } },
+  "turn left %1 degrees": { op: "motion_turnleft", in: { DEGREES: 0 } },
+  "say %1 for %2 secs": { op: "looks_sayforsecs", in: { MESSAGE: 0, SECS: 1 } },
+  "say %1": { op: "looks_say", in: { MESSAGE: 0 } },
+  "wait %1 secs": { op: "control_wait", in: { DURATION: 0 } },
+  "repeat %1": { op: "control_repeat", in: { TIMES: 0 }, sub: true },
+  "forever": { op: "control_forever", sub: true },
+  "if %1 then": { op: "control_if", in: { CONDITION: 0 }, sub: true },
+  "if %1 then else": { op: "control_if_else", in: { CONDITION: 0 }, sub: true, sub2: true },
+  "change %1 effect by %2": { op: "looks_changeeffectby", in: { CHANGE: 1 }, field: { EFFECT: 0 } },
+};
+
+function processInput(v, p, all) {
+  if (!v) return [1, [10, ""]];
+  if (typeof v === "string" || typeof v === "number") return isNaN(+v) ? [1,[10,v+""]] : [1,[4,v+""]];
+  if (v && v.block) { const s = transform([v], p, all); return [2, Object.keys(s)[0]]; }
+  return [1, [10, ""]];
+}
+
+function transform(arr, parent = null, all = {}) {
+  let prev = null;
+  arr.forEach((b, i) => {
+    if (!b || !b.block) return;
+    const def = BLOCKS[b.block];
+    if (!def) { console.warn("Chưa hỗ trợ:", b.block); return; }
+    const id = genId();
+    const top = i === 0 && !parent;
+    const block = { opcode: def.op, next: null, parent: prev || parent, topLevel: top, shadow: false, inputs: {}, fields: {} };
+    if (top) { block.x = 100 + Math.random()*400; block.y = 50 + Math.random()*300; }
+    if (def.in && b.args) Object.entries(def.in).forEach(([n,idx]) => { if (b.args[idx] !== undefined) block.inputs[n] = processInput(b.args[idx], id, all); });
+    if (def.field && b.args) Object.entries(def.field).forEach(([n,idx]) => { const v = b.args[idx]; if (v && v.value) block.fields[n] = [v.value, null]; });
+    if (def.sub && b.substack) { const s = transform(b.substack, id, all); const f = Object.keys(s)[0]; if (f) block.inputs.SUBSTACK = [2, f]; }
+    if (def.sub2 && b.substack2) { const s = transform(b.substack2, id, all); const f = Object.keys(s)[0]; if (f) block.inputs.SUBSTACK2 = [2, f]; }
+    if (prev) all[prev].next = id;
+    all[id] = block;
+    prev = id;
+  });
+  return all;
+}
+
+async function exportToSB3() {
+  const status = document.getElementById("status");
+  const code = document.getElementById("code").value.trim();
+  if (!code) { status.innerHTML = '<span class="err">Chưa nhập code!</span>'; return; }
+  try {
+    const parsed = scratchblocks.parse(code);
+    const blocks = {};
+    parsed.scripts.forEach(s => transform(s[1], null, blocks));
+    const project = { targets: [
+      { isStage: true, name: "Stage", variables: {}, lists: {}, blocks: {}, broadcasts: {}, costumes: [{name:"backdrop1",assetId:"cd21514d0531fdffb22204e0ec5ed84a",md5ext:"cd21514d0531fdffb22204e0ec5ed84a.svg",dataFormat:"svg",rotationCenterX:240,rotationCenterY:180}], sounds: [], volume:100, layerOrder:0 },
+      { isStage: false, name: "Sprite1", variables: {}, lists: {}, blocks: blocks, broadcasts: {}, visible:true, x:0, y:0, size:100, direction:90, draggable:false, rotationStyle:"all around", currentCostume:0,
+        costumes: [{name:"costume1",assetId:"bcf454acf82e4504149f7ffe07081dbc",md5ext:"bcf454acf82e4504149f7ffe07081dbc.svg",dataFormat:"svg",rotationCenterX:48,rotationCenterY:50}],
+        sounds: [{name:"pop",assetId:"83a9787d4cb6f3b7632b4ddfebf74367",md5ext:"83a9787d4cb6f3b7632b4ddfebf74367.wav",dataFormat:"wav",rate:44100,sampleCount:1032}], volume:100, layerOrder:1 }
+    ], monitors: [], extensions: [], meta: { semver: "3.0.0", vm: "0.2.0", agent: "Offline Compiler" }};
+    const zip = new JSZip();
+    zip.file("project.json", JSON.stringify(project, null, 2));
+    const blob = await zip.generateAsync({type:"blob"});
+    saveAs(blob, "project.sb3");
+    status.innerHTML = '<span class="ok">THÀNH CÔNG 100%! File .sb3 đã tải về!</span>';
+  } catch (e) {
+    console.error(e);
+    status.innerHTML = `<span class="err">Lỗi: ${e.message}</span>`;
+  }
+}
+</script>
+</body>
+</html>

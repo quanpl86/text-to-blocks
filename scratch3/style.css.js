@@ -105,9 +105,9 @@ const originalStyle = {
   /* Blockly color: text */
   literal: "#575e75",
 
-  motionPrimary: "#4c97ff",
-  motionSecondary: "#4280d7",
-  motionTertiary: "#3373cc",
+  motionPrimary: "#FF5C5C",
+  motionSecondary: "#E65353",
+  motionTertiary: "#CC4A4A",
 
   looksPrimary: "#9966ff",
   looksSecondary: "#855cd6",
