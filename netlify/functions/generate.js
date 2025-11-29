@@ -1,8 +1,8 @@
 // netlify/functions/generate.js
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
 // Hàm handler chính cho Netlify Function
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
     // Chỉ cho phép phương thức POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
