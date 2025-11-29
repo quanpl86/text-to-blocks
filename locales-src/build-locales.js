@@ -83,7 +83,10 @@ const translateKey = (raw, key) => {
   const result = raw.mappings[key] || raw.extensionMappings[key]
   const englishResult = english.mappings[key] || english.extensionMappings[key]
   if (!englishResult) {
-    throw new Error(`Unknown key: '${key}'`)
+    // Instead of throwing an error, just warn and skip.
+    // This makes the build more resilient to upstream data inconsistencies.
+    console.warn(`Warning: Unknown key: '${key}'`)
+    return
   }
   if (!result) {
     return
