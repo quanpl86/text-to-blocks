@@ -19,7 +19,7 @@ exports.handler = async function(event, context) {
             };
         }
 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         const promptText = `Based on the user's description and/or the provided image, generate valid scratchblocks syntax for Scratch 3.0... User's description: "${prompt}"`; // (Giữ nguyên prompt dài của bạn)
 
