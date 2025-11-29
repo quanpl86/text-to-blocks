@@ -217,38 +217,32 @@ document.addEventListener('DOMContentLoaded', function() {
         aiPrompt.disabled = true;
 
         try {
-            const GEMINI_API_KEY = 'AIzaSyDcYMnLaWBcjKpRMjiJMNo2N7LrRNl_TeQ'; // <--- THAY API KEY CỦA BẠN VÀO ĐÂY
-            if (GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-                alert('Vui lòng thay thế "YOUR_API_KEY_HERE" bằng API Key của Google Gemini.');
-                throw new Error("API Key chưa được thiết lập.");
-            }
+            // Thay đổi: Gọi đến API trên backend của bạn thay vì Google API trực tiếp
+            const API_URL = '/api/generate'; 
 
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-            const promptText = `Based on the user's description and/or the provided image, generate valid scratchblocks syntax for Scratch 3.0. If an image is provided, analyze it to create the script. For example, if the image is a drawing of a cat chasing a mouse, create a script for that. Generate the code in the language that corresponds to the user's request (English or Vietnamese). Only return the raw code, without explanations or markdown formatting like \`\`\`scratch. User's description: "${userPrompt}"`;
-
-            const parts = [{ "text": promptText }];
+            const requestBody = {
+                prompt: userPrompt,
+                image: uploadedImageBase64,
+            };
             if (uploadedImageBase64) {
-                parts.push({
-                    "inline_data": {
-                        "mime_type": "image/jpeg", // Giả sử là jpeg, có thể mở rộng để xử lý các loại khác
-                        "data": uploadedImageBase64
-                    }
-                });
+                requestBody.imageMimeType = "image/jpeg"; // Giả sử là jpeg
             }
             
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ "contents": [{ "parts": parts }] })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`API error: ${response.status} - ${errorData.error.message}`);
+                const errorText = await response.text(); // Đọc lỗi dưới dạng text để tránh lỗi parse JSON
+                throw new Error(`API error: ${response.status} - ${errorText}`);
             }
 
-            const data = await response.json();
-            let generatedCode = data.candidates[0].content.parts[0].text.trim();
+            const data = await response.json(); // Bây giờ việc này sẽ an toàn hơn
+            // Thay đổi: Lấy code từ phản hồi của backend
+            let generatedCode = data.code.trim();
+
             generatedCode = generatedCode.replace(/^```(scratch\s*)?/, '').replace(/```$/, '').trim();
 
             const isVietnamese = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(generatedCode);
