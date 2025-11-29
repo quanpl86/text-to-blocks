@@ -241,9 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json(); // Bây giờ việc này sẽ an toàn hơn
             // Thay đổi: Lấy code từ phản hồi của backend
-            let generatedCode = data.code.trim();
+            const rawResponse = data.code;
 
-            generatedCode = generatedCode.replace(/^```(scratch\s*)?/, '').replace(/```$/, '').trim();
+            // Cải tiến: Trích xuất chính xác khối mã scratch từ phản hồi của AI
+            const match = rawResponse.match(/```(?:scratch\s*)?\n([\s\S]*?)\n```/);
+            let generatedCode = rawResponse.trim(); // Giá trị mặc định nếu không tìm thấy khối mã
+            if (match && match) {
+                generatedCode = match.trim();
+            }
 
             const isVietnamese = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(generatedCode);
             standardCode = isVietnamese ? translateCode(generatedCode, 'en') : generatedCode;
